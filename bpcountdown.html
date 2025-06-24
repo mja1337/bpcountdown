@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Countdown to Last Working Day</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1117;
+      color: #f0f6fc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      padding: 30px;
+      border-radius: 12px;
+      background: #161b22;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 1.5em;
+      color: #58a6ff;
+    }
+    .section {
+      margin: 20px 0;
+    }
+    .label {
+      font-weight: bold;
+      color: #c9d1d9;
+    }
+    .value {
+      font-size: 1.5em;
+      color: #f0f6fc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Countdown to Friday 8th August 17:30</h1>
+
+    <div class="section">
+      <div class="label">Current Time</div>
+      <div class="value" id="live"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Time Remaining</div>
+      <div class="value" id="countdown"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Working Days Remaining</div>
+      <div class="value" id="days"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Working Hours Remaining</div>
+      <div class="value" id="hours"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Working Minutes Remaining</div>
+      <div class="value" id="minutes"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">WFH Days Remaining</div>
+      <div class="value" id="wfh"></div>
+    </div>
+  </div>
+
+  <script>
+    const endDate = new Date("2025-08-08T17:30:00");
+    const workStartHour = 9;
+    const workEndHour = 17.5;
+    const dailyHours = 7.5;
+
+    function isWorkingDay(date) {
+      const day = date.getDay();
+      return day >= 1 && day <= 5;
+    }
+
+    function isWFHDay(date) {
+      const day = date.getDay();
+      return day === 3 || day === 4;
+    }
+
+    function calculateStats() {
+      const now = new Date();
+      if (now >= endDate) return;
+
+      document.getElementById("live").textContent = now.toLocaleString();
+
+      const diff = endDate - now;
+      const seconds = Math.floor((diff / 1000) % 60);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      document.getElementById("countdown").textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+      let workingDays = 0;
+      let wfhDays = 0;
+      let temp = new Date(now);
+      temp.setHours(0, 0, 0, 0);
+
+      while (temp <= endDate) {
+        if (isWorkingDay(temp)) {
+          workingDays++;
+          if (isWFHDay(temp)) wfhDays++;
+        }
+        temp.setDate(temp.getDate() + 1);
+      }
+
+      let remainingHours = 0;
+      if (isWorkingDay(now) && now < endDate) {
+        const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+        if (hour < workEndHour) {
+          const start = Math.max(hour, workStartHour);
+          remainingHours += Math.max(0, workEndHour - start);
+        }
+        workingDays--;
+      }
+
+      const totalHours = workingDays * dailyHours + remainingHours;
+      const totalMinutes = Math.floor(totalHours * 60);
+
+      document.getElementById("days").textContent = `${workingDays}`;
+      document.getElementById("hours").textContent = `${totalHours.toFixed(2)}`;
+      document.getElementById("minutes").textContent = `${totalMinutes}`;
+      document.getElementById("wfh").textContent = `${wfhDays}`;
+    }
+
+    calculateStats();
+    setInterval(calculateStats, 10000);
+  </script>
+</body>
+</html>
