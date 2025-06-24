@@ -73,6 +73,16 @@
       <div class="label">WFH Days Remaining</div>
       <div class="value" id="wfh"></div>
     </div>
+
+    <div class="section">
+      <div class="label">Office Days Remaining (Mon, Tue, Fri)</div>
+      <div class="value" id="office-days"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Office Minutes Remaining</div>
+      <div class="value" id="office-minutes"></div>
+    </div>
   </div>
 
   <script>
@@ -91,6 +101,11 @@
       return day === 3 || day === 4;
     }
 
+    function isOfficeDay(date) {
+      const day = date.getDay();
+      return day === 1 || day === 2 || day === 5;
+    }
+
     function calculateStats() {
       const now = new Date();
       if (now >= endDate) return;
@@ -106,6 +121,7 @@
 
       let workingDays = 0;
       let wfhDays = 0;
+      let officeDays = 0;
       let temp = new Date(now);
       temp.setHours(0, 0, 0, 0);
 
@@ -113,27 +129,39 @@
         if (isWorkingDay(temp)) {
           workingDays++;
           if (isWFHDay(temp)) wfhDays++;
+          if (isOfficeDay(temp)) officeDays++;
         }
         temp.setDate(temp.getDate() + 1);
       }
 
       let remainingHours = 0;
+      let remainingOfficeHours = 0;
+
       if (isWorkingDay(now) && now < endDate) {
         const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
         if (hour < workEndHour) {
           const start = Math.max(hour, workStartHour);
-          remainingHours += Math.max(0, workEndHour - start);
+          const remToday = Math.max(0, workEndHour - start);
+          remainingHours += remToday;
+          if (isOfficeDay(now)) remainingOfficeHours += remToday;
         }
         workingDays--;
+        if (isWFHDay(now)) wfhDays--;
+        if (isOfficeDay(now)) officeDays--;
       }
 
       const totalHours = workingDays * dailyHours + remainingHours;
       const totalMinutes = Math.floor(totalHours * 60);
 
+      const totalOfficeHours = officeDays * dailyHours + remainingOfficeHours;
+      const totalOfficeMinutes = Math.floor(totalOfficeHours * 60);
+
       document.getElementById("days").textContent = `${workingDays}`;
       document.getElementById("hours").textContent = `${totalHours.toFixed(2)}`;
       document.getElementById("minutes").textContent = `${totalMinutes}`;
       document.getElementById("wfh").textContent = `${wfhDays}`;
+      document.getElementById("office-days").textContent = `${officeDays}`;
+      document.getElementById("office-minutes").textContent = `${totalOfficeMinutes}`;
     }
 
     calculateStats();
